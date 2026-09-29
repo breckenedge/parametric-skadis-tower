@@ -1,0 +1,5 @@
+# The OpenSCAD GUI rewrites files with CRLF on Windows. Normalize on commit so
+# that does not show up as a whole-file diff.
+*.scad text eol=lf
+*.md   text eol=lf
+*.png  binary

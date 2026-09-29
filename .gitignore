@@ -1,0 +1,14 @@
+# Render output — regenerate from the .scad instead of committing it
+*.stl
+*.3mf
+*.gcode
+*.amf
+*.off
+
+# Loose renders at the repo root; curated previews live in images/
+/*.png
+
+# OpenSCAD editor/session leftovers
+*.scad.bak
+*~
+.DS_Store
