@@ -23,6 +23,23 @@ Both parts live in one file on purpose. They share every dimension that has to m
 wall thickness, tab size, tab positions — so the cap's pockets cannot drift out of sync
 with the tower's tabs the first time you change a tab setting.
 
+## Ready-to-print files
+
+`export/` holds STL and 3MF of the default 80 x 80 mm configuration, if you just want to
+print the thing without opening OpenSCAD.
+
+| File | What it is |
+| --- | --- |
+| `tower-80x80x160` | A stackable segment. Print as many as you want height. |
+| `tower-80x80x160-flat-top` | The same segment with no tabs on top, for the last one in a stack. It still has pockets underneath, so it seats on the segment below. |
+| `cap-80x80-10deg` | The tilted cap, 10 degrees. |
+
+For a single-segment tower with nothing on top, use the flat-top file on its own.
+
+These are one frozen point in the parameter space. For any other size, tilt, or wall
+thickness, open the `.scad` and render your own — that is the whole point of the project,
+and the exports are not a substitute for it.
+
 ## Quick start
 
 1. Open `skadis_tower.scad` in OpenSCAD.

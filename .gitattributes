@@ -3,3 +3,8 @@
 *.scad text eol=lf
 *.md   text eol=lf
 *.png  binary
+
+# Exported geometry. Marked explicitly so Git never applies text/EOL conversion
+# to them on Windows, which would corrupt a binary STL.
+*.stl  binary
+*.3mf  binary
