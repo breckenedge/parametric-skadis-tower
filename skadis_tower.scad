@@ -121,7 +121,8 @@ edge_margin = 4;    // [2:0.5:20]
 
 /* [Cap] */
 
-// A solid lid with no slots, for closing off the top of a stack.
+// A lid with no slots, for closing off the top of a stack: solid, or an open
+// collar with `cap_open`.
 //
 // Tilt of the cap's top face, degrees from horizontal. 10 aims a desktop
 // speaker up toward seated ear height. 0 gives a plain flat lid.
@@ -135,17 +136,26 @@ cap_tilt_dir = 0;   // [0:high edge at back (+Y), 90:high edge at left (-X), 180
 // the cap's overall thickness: a pocket is as deep as a tab is tall, so the low
 // edge works out to tab_height + tab_clearance + this.
 cap_roof = 4;       // [2:0.5:15]
+// Open the cap's middle, leaving a collar: the tower's walls cut off at the
+// tilt, so the speaker sits on a slanted rim and cables come straight up the
+// core. Off gives a solid lid.
+cap_open = false;
 
 /* [Base] */
 
 // A footing for the bottom of a stack. Tabs on its top drop into the pockets
 // under the lowest tower segment, the same way one segment seats on another.
 //
-// Footprint of the base at the floor, X, mm. Must be at least `width`; anything
-// wider is a flange that resists tipping and carries the outside screw holes.
-base_width = 120;   // [25:1:600]
-// Footprint of the base at the floor, Y, mm. Must be at least `depth`.
-base_depth = 120;   // [25:1:600]
+// The base's footprint follows the tower: it is the tower's outline grown by a
+// flange on every side, so it can never come out narrower than the tower. The
+// flange resists tipping and carries the outside screw holes.
+//
+// Flange on each side in X (left and right), mm. The footprint at the floor is
+// `width` plus twice this.
+base_offset_width = 20; // [0:0.5:250]
+// Flange on each side in Y (front and back), mm. The footprint at the floor is
+// `depth` plus twice this.
+base_offset_depth = 20; // [0:0.5:250]
 // Height of the base (Z), mm, not counting the tabs on top.
 base_height = 20;   // [3:0.5:100]
 // Corner radius of the footprint at the floor, mm.
@@ -264,8 +274,12 @@ cap_rise = cap_span * tan(cap_tilt);
 // pocket roof is a self-supporting arch.
 tab_r = tab_width / 2;
 
-// Base geometry. Depth of a 90 degree countersink: the cone narrows from the
-// head to the shank at 45 degrees.
+// Base geometry. The footprint at the floor: the tower grown by the flange.
+base_width = width + 2 * base_offset_width;
+base_depth = depth + 2 * base_offset_depth;
+
+// Depth of a 90 degree countersink: the cone narrows from the head to the
+// shank at 45 degrees.
 base_sink_h = (base_screw_head_d - base_screw_d) / 2;
 base_head_r = base_screw_head_d / 2;
 
@@ -405,9 +419,8 @@ assert(cap_tilt_dir == 0 || cap_tilt_dir == 90 || cap_tilt_dir == 180
 // Base checks only apply when rendering the base, so an awkward base setting
 // never blocks rendering a tower or a cap.
 if (make_base) {
-    assert(base_width >= width && base_depth >= depth,
-        str("base_width/base_depth must be at least the tower's width/depth (",
-            width, " x ", depth, " mm), or the tower overhangs its own base"));
+    assert(base_offset_width >= 0 && base_offset_depth >= 0,
+        "base_offset_width/base_offset_depth cannot be negative, or the tower overhangs its own base");
 
     assert(base_corner_radius <= min(base_width, base_depth) / 2,
         str("base_corner_radius cannot exceed half the smaller of base_width/base_depth (max ",
@@ -448,12 +461,12 @@ if (make_base) {
             // land on solid base at the seat height, not hang off the taper.
             assert(rrect_sd(base_screw_xy, width, depth, corner_radius) >= base_head_r + 0.5,
                 str("base is too small for outside screw holes: the heads would run under ",
-                    "the tower. Widen base_width/base_depth, or use base_screw_position = inside"));
+                    "the tower. Grow base_offset_width/base_offset_depth, or use base_screw_position = inside"));
 
             s = base_section(base_screw_seat);
             assert(rrect_sd(base_screw_xy, s[0], s[1], s[2]) <= -(base_head_r + 1),
                 str("outside screw heads hang off the edge of the base at the seat height. ",
-                    "Widen the base, raise base_foot, or lower base_screw_seat"));
+                    "Grow base_offset_width/base_offset_depth, raise base_foot, or lower base_screw_seat"));
         }
     }
 
@@ -489,7 +502,7 @@ if (make_base) {
 
         assert(base_screws == 0 || base_screw_position == "inside"
                || base_screw_xy[0] - base_column_r >= max(base_inlet_bay_w, base_alcove_w) / 2,
-            "the front outside screw columns run into the inlet alcove; widen base_width or put the screws inside");
+            "the front outside screw columns run into the inlet alcove; grow base_offset_width or put the screws inside");
     }
 }
 
@@ -715,6 +728,11 @@ module skadis_cap(pockets = true) {
             cap_tilt_cut();
         }
         if (pockets) all_joints(pocket = true);
+        // The collar: the tower's core carried up through the top.
+        if (cap_open)
+            translate([0, 0, -1])
+                linear_extrude(cap_base + cap_rise + 2)
+                    rrect(inner_w, inner_d, inner_r);
     }
 }
 
@@ -955,7 +973,7 @@ echo(str("Run: ", make_base ? "base, " : "", towers, " tower segment", towers ==
                                  " mm long row")
                            : str(", ", stack_h, " mm tall to the top surface",
                                  fused ? " as one solid" : "")));
-if (fused && make_cap && towers > 0)
+if (fused && make_cap && towers > 0 && !cap_open)
     echo(str("  the cap's underside spans the tower's core: a ", min(inner_w, inner_d),
              " mm bridge"));
 
@@ -1028,7 +1046,9 @@ if (make_cap) {
     echo(str("  pockets: ", tabs_per_wall * 4, " x ", tab_width, " mm wide, ",
              tab_height + tab_clearance, " mm deep, ", cap_roof,
              " mm of material above"));
-    echo("  solid in the model on purpose - set infill in the slicer");
+    echo(cap_open ? str("  open collar: ", wall, " mm rim around a ", inner_w, " x ", inner_d,
+                        " mm opening")
+                  : "  solid in the model on purpose - set infill in the slicer");
 }
 
 // ============================================================================

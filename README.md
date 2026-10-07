@@ -103,12 +103,13 @@ settings, material left at the ends, and whether the height stacks cleanly.
 | `cap_tilt` | 10 | Degrees from horizontal. 0 gives a plain flat lid. |
 | `cap_tilt_dir` | 0 | Which edge is the high one, as a compass direction. |
 | `cap_roof` | 4 | Material over the pockets at the low edge. Sets the cap's thickness. |
+| `cap_open` | false | Opens the middle, leaving a collar: the tower's walls cut off at the tilt. The speaker sits on a slanted rim, and cables come straight up the core. |
 
 ### Base
 
 | Parameter | Default | Notes |
 | --- | --- | --- |
-| `base_width`, `base_depth` | 120 | Footprint at the floor in mm. At least the tower's `width`/`depth`; the extra is a flange that resists tipping. |
+| `base_offset_width`, `base_offset_depth` | 20, 20 | Flange on each side of the tower in mm, in X and Y. The footprint at the floor is the tower's outline grown by these, so it follows `width`/`depth` and is never narrower than the tower: 80 mm + 2 × 20 = 120 mm at the defaults. The flange resists tipping. |
 | `base_height` | 20 | Height in mm, not counting the tabs on top. |
 | `base_corner_radius` | 12 | Corner radius of the footprint at the floor. |
 | `base_taper` | true | Slopes the sides from the footprint in to the tower's outline, so the base flows into the tower. Off gives a straight-sided block. |
