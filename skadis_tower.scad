@@ -115,6 +115,13 @@ slot_fillet = 0.8;  // [0:0.1:2]
 // Run the left/right faces out of phase with the front/back, so the gap to the
 // shared corner alternates long/short up the edge instead of matching.
 alternate_corners = true;
+// Which faces carry the Skadis pattern. Turn a face off to leave it plain, such
+// as the back of a tower that stands against a wall. Front is -Y (the side the
+// base's power inlet is on), back +Y, left -X, right +X.
+slots_front = true;
+slots_back = true;
+slots_left = true;
+slots_right = true;
 // Minimum solid material between a slot opening and a rounded corner, mm.
 // Horizontal only: the vertical spacing is fixed by the stacking rule below.
 edge_margin = 4;    // [2:0.5:20]
@@ -691,10 +698,10 @@ module skadis_tower(tabs = stackable, pockets = true) {
         // Width faces (normal to Y), then depth faces (normal to X). The depth
         // faces take the opposite parity so the corners stagger.
         p = alternate_corners ? 1 : 0;
-        face_pattern(cols_x, depth / 2,   0, 0);
-        face_pattern(cols_x, depth / 2, 180, 0);
-        face_pattern(cols_y, width / 2,  90, p);
-        face_pattern(cols_y, width / 2, -90, p);
+        if (slots_back)  face_pattern(cols_x, depth / 2,   0, 0);
+        if (slots_front) face_pattern(cols_x, depth / 2, 180, 0);
+        if (slots_left)  face_pattern(cols_y, width / 2,  90, p);
+        if (slots_right) face_pattern(cols_y, width / 2, -90, p);
 
         // Pockets don't depend on `tabs`: even a segment with no tabs of its
         // own has to drop onto the one below. They are left out only when the
@@ -1012,6 +1019,9 @@ if (towers > 0) {
 echo(str("Skadis tower: ", towers, " x ", width, " x ", depth, " x ", height, " mm"));
 echo(str("  width faces: ", cols_x, " cols x ", rows, " rows (checkerboard)"));
 echo(str("  depth faces: ", cols_y, " cols x ", rows, " rows (checkerboard)"));
+if (!(slots_front && slots_back && slots_left && slots_right))
+echo(str("  plain faces (no slots):", slots_front ? "" : " front", slots_back ? "" : " back",
+         slots_left ? "" : " left", slots_right ? "" : " right"));
 if (fused)
 echo(str("  fused: one solid, ", make_base ? "joined to the base, " : str(tabs_per_wall * 4,
          " pockets underneath, "), make_cap ? "joined to the cap" : top_tabs
