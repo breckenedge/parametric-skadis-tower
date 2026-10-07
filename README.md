@@ -94,7 +94,7 @@ settings, material left at the ends, and whether the height stacks cleanly.
 | `slot_fit` | 0.2 | Printing allowance on the slot **width** only. |
 | `slot_fillet` | 0.8 | Rounds each slot opening, inside and out. |
 | `alternate_corners` | true | Staggers the pattern where two faces meet. |
-| `slots_front`, `slots_back`, `slots_left`, `slots_right` | true | Which faces carry the Skadis pattern. Turn one off for a plain face, such as the back of a tower against a wall. Front is -Y, the side the base's power inlet is on. |
+| `slots_front`, `slots_back`, `slots_left`, `slots_right` | true, false, true, true | Which faces carry the Skadis pattern. The back is off by default, for a tower that stands against a wall. Turn any face on or off. Front is -Y, the side the base's power inlet is on. |
 | `edge_margin` | 4 | Minimum material between a slot and a rounded corner. |
 
 ### Cap

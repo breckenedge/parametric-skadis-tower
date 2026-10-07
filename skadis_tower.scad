@@ -119,7 +119,7 @@ alternate_corners = true;
 // as the back of a tower that stands against a wall. Front is -Y (the side the
 // base's power inlet is on), back +Y, left -X, right +X.
 slots_front = true;
-slots_back = true;
+slots_back = false;
 slots_left = true;
 slots_right = true;
 // Minimum solid material between a slot opening and a rounded corner, mm.
