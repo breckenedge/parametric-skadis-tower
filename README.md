@@ -94,7 +94,7 @@ settings, material left at the ends, and whether the height stacks cleanly.
 | `slot_fit` | 0.2 | Printing allowance on the slot **width** only. |
 | `slot_fillet` | 0.8 | Rounds each slot opening, inside and out. |
 | `alternate_corners` | true | Staggers the pattern where two faces meet. |
-| `slots_front`, `slots_back`, `slots_left`, `slots_right` | true, false, true, true | Which faces carry the Skadis pattern. The back is off by default, for a tower that stands against a wall. Turn any face on or off. Front is -Y, the side the base's power inlet is on. |
+| `slots_front`, `slots_back`, `slots_left`, `slots_right` | true, false, true, true | Which faces carry the Skadis pattern. The back is off by default, for a tower that stands against a wall. Turn any face on or off. Front is -Y; back is +Y, the side the base's power inlet is on. |
 | `edge_margin` | 4 | Minimum material between a slot and a rounded corner. |
 
 ### Cap
@@ -102,7 +102,7 @@ settings, material left at the ends, and whether the height stacks cleanly.
 | Parameter | Default | Notes |
 | --- | --- | --- |
 | `cap_tilt` | 10 | Degrees from horizontal. 0 gives a plain flat lid. |
-| `cap_tilt_dir` | 0 | Which edge is the high one, as a compass direction. |
+| `cap_tilt_dir` | 180 | Which edge is the high one: 0 back (+Y), 90 left (-X), 180 front (-Y), 270 right (+X). The front default tips a speaker back toward you. |
 | `cap_roof` | 4 | Material over the pockets at the low edge. Sets the cap's thickness. |
 | `cap_open` | false | Opens the middle, leaving a collar: the tower's walls cut off at the tilt. The speaker sits on a slanted rim, and cables come straight up the core. |
 
@@ -137,16 +137,16 @@ holes seat on solid pads, each webbed out to its corner of the wall, so they wor
 
 ### Base power inlet
 
-A cutout in the front (-Y) of the base for a snap-in IEC C14 power inlet: the common
+A cutout in the back (+Y) of the base for a snap-in IEC C14 power inlet: the common
 3-in-1 module with a power socket, fuse drawer and rocker switch. Mains comes in at the base, and
 the wires run up through the hollow core.
 
-<img src="images/base-inlet.png" alt="The taller base with a power inlet recessed flush with the tower's front face" width="330">
+<img src="images/base-inlet.png" alt="The taller base with a power inlet recessed flush with the tower's back face" width="330">
 
-The inlet is recessed. An alcove is cut down through the front of the base, so the inlet
-sits flush with the tower's front face instead of the base's outer edge. The plug then
+The inlet is recessed. An alcove is cut down through the back of the base, so the inlet
+sits flush with the tower's back face instead of the base's outer edge. The plug then
 stands out less, and that face still lines up with the tower above it. The alcove needs
-the flat part of the tower's front face to be wide enough. With the default 6 mm
+the flat part of the tower's back face to be wide enough. With the default 6 mm
 `corner_radius`, the tower has to be at least 67 mm wide.
 
 The defaults are sized for this module:

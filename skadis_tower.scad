@@ -116,8 +116,8 @@ slot_fillet = 0.8;  // [0:0.1:2]
 // shared corner alternates long/short up the edge instead of matching.
 alternate_corners = true;
 // Which faces carry the Skadis pattern. Turn a face off to leave it plain, such
-// as the back of a tower that stands against a wall. Front is -Y (the side the
-// base's power inlet is on), back +Y, left -X, right +X.
+// as the back of a tower that stands against a wall. Front is -Y, back +Y (the
+// side the base's power inlet is on), left -X, right +X.
 slots_front = true;
 slots_back = false;
 slots_left = true;
@@ -137,8 +137,9 @@ cap_tilt = 10;      // [0:0.5:30]
 // Which edge of the cap is the high one. On a square tower this is only a print
 // orientation and you can just spin the finished part; it starts to matter once
 // width and depth differ. For a desk speaker, put the high edge toward your
-// listening position, so the speaker tips back and fires up at you.
-cap_tilt_dir = 0;   // [0:high edge at back (+Y), 90:high edge at left (-X), 180:high edge at front (-Y), 270:high edge at right (+X)]
+// listening position, so the speaker tips back and fires up at you. The default
+// puts it at the front, the slotted face opposite the power inlet.
+cap_tilt_dir = 180; // [0:high edge at back (+Y), 90:high edge at left (-X), 180:high edge at front (-Y), 270:high edge at right (+X)]
 // Solid material over the tab pockets at the LOW edge, mm. This is what sets
 // the cap's overall thickness: a pocket is as deep as a tab is tall, so the low
 // edge works out to tab_height + tab_clearance + this.
@@ -188,9 +189,9 @@ base_floor = 0;     // [0:0.5:20]
 /* [Base power inlet] */
 
 // A snap-in IEC C14 power inlet (the common fused, switched 3-in-1 module) in
-// the front (-Y) of a hollow base, so mains comes in at the base and the wires
+// the back (+Y) of a hollow base, so mains comes in at the base and the wires
 // run up the tower's core. The inlet is recessed into an alcove so its face is
-// flush with the tower's front face rather than the base's outer edge, keeping
+// flush with the tower's back face rather than the base's outer edge, keeping
 // the plug from standing out. Needs base_hollow and a base of about 40 mm or
 // more; the console gives the exact minimum.
 base_inlet = false;
@@ -327,9 +328,10 @@ base_column_r = base_head_r + base_wall;
 // there is no floor, so the cut opens cleanly through it.
 base_cavity_z0 = base_floor > 0 ? base_floor : -1;
 
-// Power inlet. The panel is in the plane of the tower's front face, at the back
+// Power inlet. The panel is in the plane of the tower's back face, at the back
 // of a straight-sided alcove cut down through the base. The bay behind the
-// panel leaves clip room all round the cutout.
+// panel leaves clip room all round the cutout. The inlet pieces are modeled on
+// the -Y side and mirrored to the back by inlet_side().
 base_front = -depth / 2;
 base_alcove_w = base_inlet_flange_w + 2 * base_inlet_alcove_gap;
 base_inlet_bay_w = base_inlet_w + 2 * base_inlet_clip_room;
@@ -494,7 +496,7 @@ if (make_base) {
 
         assert(base_alcove_w <= width - 2 * corner_radius,
             str("the inlet alcove (", base_alcove_w, " mm) is wider than the flat of the tower's ",
-                "front face (", width - 2 * corner_radius, " mm); widen the tower, reduce ",
+                "back face (", width - 2 * corner_radius, " mm); widen the tower, reduce ",
                 "corner_radius, or narrow base_inlet_alcove_gap"));
 
         assert(base_inlet_flange_w > base_inlet_w && base_inlet_flange_h > base_inlet_h,
@@ -509,7 +511,7 @@ if (make_base) {
 
         assert(base_screws == 0 || base_screw_position == "inside"
                || base_screw_xy[0] - base_column_r >= max(base_inlet_bay_w, base_alcove_w) / 2,
-            "the front outside screw columns run into the inlet alcove; grow base_offset_width or put the screws inside");
+            "the back outside screw columns run into the inlet alcove; grow base_offset_width or put the screws inside");
     }
 }
 
@@ -773,7 +775,7 @@ module cap_tilt_cut() {
 // all ballast.
 //
 // The optional power inlet is recessed: a straight-sided alcove is cut down
-// through the front of the base to the plane of the tower's front face, and the
+// through the back of the base to the plane of the tower's back face, and the
 // inlet sits in that plane, flush with the tower above it. The alcove is open
 // to the sky, so it has no roof to support, and the cavity's 45 degree roof
 // reaches out over the bay behind the panel.
@@ -790,7 +792,7 @@ module skadis_base(tabs = true) {
             for (s = base_screw_signs)
                 translate([s[0] * base_screw_xy[0], s[1] * base_screw_xy[1], 0])
                     base_screw_hole();
-            if (base_inlet) {
+            if (base_inlet) inlet_side() {
                 base_alcove();
                 translate([-base_inlet_w / 2, base_front - 1, base_inlet_z - base_inlet_h / 2])
                     cube([base_inlet_w, base_inlet_panel + 2, base_inlet_h]);
@@ -817,8 +819,14 @@ module base_body() {
     }
 }
 
-// Everything in front of the tower's front face across the alcove's width,
-// grown by `grow` at the sides and back.
+// The base's inlet pieces are modeled on the -Y side; this moves them to the
+// back (+Y).
+module inlet_side() {
+    mirror([0, 1, 0]) children();
+}
+
+// Everything outside the tower's face across the alcove's width, grown by
+// `grow` at the sides and inward. Modeled on the -Y side; see inlet_side().
 module base_alcove(grow = 0) {
     translate([-base_alcove_w / 2 - grow, -base_depth / 2 - 1, -1])
         cube([base_alcove_w + 2 * grow, (base_depth - depth) / 2 + 1 + grow,
@@ -831,7 +839,7 @@ module base_cavity() {
             base_cavity_limit();
             union() {
                 base_cavity_roof();
-                if (base_inlet)
+                if (base_inlet) inlet_side()
                     translate([-base_inlet_bay_w / 2, base_front + base_inlet_panel, base_cavity_z0])
                         cube([base_inlet_bay_w, base_inlet_depth + 1,
                               base_inlet_bay_top - base_cavity_z0]);
@@ -853,11 +861,11 @@ module base_cavity() {
                         cylinder(r = base_column_r, h = base_screw_seat + 1);
                 }
         // Walls around the inlet alcove.
-        if (base_inlet) base_alcove(grow = base_wall);
+        if (base_inlet) inlet_side() base_alcove(grow = base_wall);
     }
-    // Thin the front wall around the cutout to panel thickness, so the clips
+    // Thin the back wall around the cutout to panel thickness, so the clips
     // can catch behind it.
-    if (base_inlet)
+    if (base_inlet) inlet_side()
         translate([-base_inlet_bay_w / 2, base_front + base_inlet_panel,
                    base_inlet_z - base_inlet_h / 2 - base_inlet_clip_room])
             cube([base_inlet_bay_w, base_wall - base_inlet_panel + 1,
@@ -1005,7 +1013,7 @@ if (make_base) {
         : "  solid in the model on purpose - set infill in the slicer");
     if (base_inlet) {
         echo(str("  power inlet: ", base_inlet_w, " x ", base_inlet_h,
-                 " mm cutout flush with the tower's front (-Y) face, centred ", base_inlet_z,
+                 " mm cutout flush with the tower's back (+Y) face, centred ", base_inlet_z,
                  " mm up, in a ", base_inlet_panel, " mm panel"));
         echo(str("  alcove: ", base_alcove_w, " mm wide, ", (base_depth - depth) / 2,
                  " mm deep, open at the top"));

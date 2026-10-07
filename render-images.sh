@@ -37,7 +37,8 @@ render() {
 }
 
 # The full stack, assembled: a base with the power inlet, two segments, a cap.
-render stack 700x1150 0,0,195,62,0,25,1450 \
+# Seen from the back-right corner, so the inlet shows.
+render stack 700x1150 0,0,195,62,0,155,1450 \
     -D make_base=true -D towers=2 -D make_cap=true -D 'layout="assembled"' \
     -D base_inlet=true -D base_height=45
 
@@ -50,5 +51,5 @@ render print 1200x450 0,0,60,62,0,15,780 \
 render tower      700x1000 0,0,80,62,0,25,620
 render cap        800x560  0,0,8,55,0,25,300   -D towers=0 -D make_cap=true
 render base       800x560  0,0,10,55,0,25,380  -D towers=0 -D make_base=true
-render base-inlet 800x560  0,0,22,60,0,20,400  -D towers=0 -D make_base=true \
+render base-inlet 800x560  0,0,22,60,0,200,400 -D towers=0 -D make_base=true \
     -D base_inlet=true -D base_height=45
