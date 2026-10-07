@@ -1,13 +1,11 @@
-# Stray render output anywhere in the tree. Ready-to-print exports of the
-# default configuration are committed under export/ and are re-included below.
+# Render output anywhere in the tree, including export/. Generate your own from
+# the .scad; nothing rendered is committed.
 *.stl
 *.3mf
 *.gcode
 *.amf
 *.off
-
-!export/*.stl
-!export/*.3mf
+export/
 
 # Loose renders at the repo root; curated previews live in images/
 /*.png

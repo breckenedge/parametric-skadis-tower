@@ -25,13 +25,32 @@
 // All dimensions are millimeters.
 // ============================================================================
 
-/* [Part] */
+/* [Parts] */
 
-// Which piece to render. Both parts read the same shared dimensions below, so
-// the cap's pockets always line up with the tower's tabs. That is the reason
-// the cap lives in this file instead of a separate copy that could drift out of
-// sync the first time you change a tab setting.
-part = "tower";  // [tower, cap]
+// Which pieces to render. Turn on several to get a whole stack in one run.
+// Every part reads the same shared dimensions below, so the cap's pockets and
+// the base's tabs always line up with the tower. That is the reason they live
+// in this file instead of separate copies that could drift out of sync the
+// first time you change a tab setting.
+//
+// A base for the bottom of the stack.
+make_base = false;
+// How many tower segments. 0 leaves the tower out.
+towers = 1;         // [0:1:10]
+// A tilted cap for the top of the stack.
+make_cap = false;
+// How to arrange the pieces.
+//   print     - side by side on the bed, each standing as it prints. Export this
+//               to print the pieces separately and stack them.
+//   fused     - stacked and joined into one solid, to print the whole tower in
+//               one go. The joints between pieces are left out; the bottom of
+//               the run keeps its pockets and the top keeps its tabs, so a fused
+//               run still stacks onto separate pieces.
+//   assembled - stacked as they go together, to see the whole thing. The tabs
+//               sit loose in their pockets, so don't print from this layout.
+layout = "print";   // [print, fused, assembled]
+// Space between pieces in the print layout, mm.
+layout_gap = 10;    // [2:1:50]
 
 /* [Tower size] */
 
@@ -57,9 +76,10 @@ wall = 4.5;         // [3:0.1:10]
 
 /* [Stacking] */
 
-// Tabs on top, for a segment to stack on. Turn this off for the topmost
-// segment to get a clean flat top. The pockets underneath are cut either way,
-// so the piece still seats on the segment below it.
+// Tabs on top of the topmost segment, for another segment to stack on. Turn
+// this off to get a clean flat top. Lower segments in a run always get tabs,
+// and so does the top one when the cap is on. The pockets underneath are cut
+// either way, so every segment seats on whatever is below it.
 stackable = true;
 // Tabs along each wall
 tabs_per_wall = 2;    // [1:1:4]
@@ -116,6 +136,87 @@ cap_tilt_dir = 0;   // [0:high edge at back (+Y), 90:high edge at left (-X), 180
 // edge works out to tab_height + tab_clearance + this.
 cap_roof = 4;       // [2:0.5:15]
 
+/* [Base] */
+
+// A footing for the bottom of a stack. Tabs on its top drop into the pockets
+// under the lowest tower segment, the same way one segment seats on another.
+//
+// Footprint of the base at the floor, X, mm. Must be at least `width`; anything
+// wider is a flange that resists tipping and carries the outside screw holes.
+base_width = 120;   // [25:1:600]
+// Footprint of the base at the floor, Y, mm. Must be at least `depth`.
+base_depth = 120;   // [25:1:600]
+// Height of the base (Z), mm, not counting the tabs on top.
+base_height = 20;   // [3:0.5:100]
+// Corner radius of the footprint at the floor, mm.
+base_corner_radius = 12; // [0:0.5:100]
+// Slope the sides in from the footprint at the floor to the tower's own outline
+// at the top, so the base flows into the tower. Off gives a straight-sided block.
+base_taper = true;
+// Straight, vertical section at the bottom before the taper starts, mm. Keeps
+// the outer edge from thinning to a knife edge that would curl off the bed.
+base_foot = 4;      // [0:0.5:50]
+// Hollow the base out into a closed box that opens up into the tower's core, so
+// wires can run up the middle. Off gives a solid base: more weight down low,
+// with the slicer's infill as the knob.
+base_hollow = true;
+// Wall thickness of a hollow base, mm. The walls thicken toward the top, where
+// they meet the tower wall.
+base_wall = 3;      // [1.2:0.1:10]
+// Floor thickness of a hollow base, mm. 0 leaves the bottom open, so the base
+// is just walls: lighter, faster to print, and wires can also come in from
+// below. Screws get solid pads or columns either way.
+base_floor = 0;     // [0:0.5:20]
+
+/* [Base power inlet] */
+
+// A snap-in IEC C14 power inlet (the common fused, switched 3-in-1 module) in
+// the front (-Y) of a hollow base, so mains comes in at the base and the wires
+// run up the tower's core. The inlet is recessed into an alcove so its face is
+// flush with the tower's front face rather than the base's outer edge, keeping
+// the plug from standing out. Needs base_hollow and a base of about 40 mm or
+// more; the console gives the exact minimum.
+base_inlet = false;
+// Panel cutout, width x height, mm. 47.5 x 28.5 fits the usual generic module
+// (datasheets give 47.1-47.2 x 28.1-28.3). Measure yours.
+base_inlet_w = 47.5;     // [10:0.1:100]
+base_inlet_h = 28.5;     // [10:0.1:100]
+// The flange on the front of the module, mm. It must sit on a flat face.
+base_inlet_flange_w = 50.5; // [10:0.1:110]
+base_inlet_flange_h = 31.5; // [10:0.1:110]
+// How far the module reaches behind the panel, terminals included, mm.
+base_inlet_depth = 35;   // [10:0.5:80]
+// Wall thickness around the cutout, mm. Snap-in clips are made for thin sheet
+// panels, so the wall is thinned to this from inside around the opening.
+base_inlet_panel = 2;    // [0.8:0.1:5]
+// Clearance around the cutout behind the panel for the snap clips to spring
+// open, mm.
+base_inlet_clip_room = 4; // [1:0.5:10]
+// Space between the flange and each side of the alcove, mm.
+base_inlet_alcove_gap = 2; // [0:0.5:20]
+
+/* [Base screw holes] */
+
+// Screw holes for fixing the base down to a desk or shelf.
+base_screws = 4;    // [0:none, 2:2 (diagonal corners), 4:4 (all corners)]
+// Where the holes go.
+//   outside - in the flange around the tower, reachable with the tower in place.
+//             Needs a base wider than the tower.
+//   inside  - under the tower's hollow core, hidden once the tower is on. Screw
+//             the base down first, then drop the tower onto it.
+base_screw_position = "outside"; // [outside, inside]
+// Shank clearance hole, mm. 4.5 suits a #8 / 4 mm wood screw.
+base_screw_d = 4.5;      // [2:0.1:10]
+// Head shape. Countersunk is a 90 degree cone for flat-head wood screws;
+// counterbore is a flat-bottomed recess for pan-head or cap screws.
+base_screw_head = "countersunk"; // [countersunk, counterbore]
+// Head diameter, plus a little clearance, mm.
+base_screw_head_d = 9;   // [4:0.1:20]
+// Height above the floor where the head seats, mm: the top of a countersunk head,
+// or the underside of a counterbored one. This is the material the screw
+// clamps; the recess above it runs clear to the top surface.
+base_screw_seat = 4;     // [1:0.5:50]
+
 /* [Hidden] */
 
 $fn = 48;
@@ -162,6 +263,67 @@ cap_rise = cap_span * tan(cap_tilt);
 // Dome radius of a tab: a full semicircle across the tab, so the matching
 // pocket roof is a self-supporting arch.
 tab_r = tab_width / 2;
+
+// Base geometry. Depth of a 90 degree countersink: the cone narrows from the
+// head to the shank at 45 degrees.
+base_sink_h = (base_screw_head_d - base_screw_d) / 2;
+base_head_r = base_screw_head_d / 2;
+
+// Cross-section of the base at height z, as [w, d, r]. The tapered base is a
+// hull of the floor footprint and the tower outline, and a hull of two convex
+// outlines slices to a straight blend of the two, so every term interpolates.
+function base_section(z) =
+    let (t = (!base_taper || z <= base_foot) ? 0
+             : min((z - base_foot) / (base_height - base_foot), 1))
+    [base_width         + t * (width - base_width),
+     base_depth         + t * (depth - base_depth),
+     base_corner_radius + t * (corner_radius - base_corner_radius)];
+
+// Signed distance from point p to a centered rounded rectangle: negative inside.
+function rrect_sd(p, w, d, r) =
+    let (qx = abs(p[0]) - (w / 2 - r),
+         qy = abs(p[1]) - (d / 2 - r))
+    norm([max(qx, 0), max(qy, 0)]) + min(max(qx, qy), 0) - r;
+
+// One screw position per quadrant, mirrored into the others. Outside holes sit
+// midway across the flange; inside holes tuck into the cavity's corners, clear
+// of its rounded corner and of the tabs, which stay within the wall.
+base_screw_inset = base_head_r + inner_r + 1;
+base_screw_xy = base_screw_position == "inside"
+    ? [inner_w / 2 - base_screw_inset, inner_d / 2 - base_screw_inset]
+    : [(width + base_width) / 4, (depth + base_depth) / 4];
+
+base_screw_signs = base_screws == 4 ? [[1, 1], [-1, 1], [-1, -1], [1, -1]]
+                 : base_screws == 2 ? [[1, 1], [-1, -1]]
+                 : [];
+
+// In a hollow base, outside screws pass through a solid column from the floor
+// to the top surface, so the head is reachable from above. Inside screws stand
+// on a solid pad as tall as the seat, so they work with no floor at all.
+base_column_r = base_head_r + base_wall;
+
+// Where the cavity starts: on the floor, or just below the bottom face when
+// there is no floor, so the cut opens cleanly through it.
+base_cavity_z0 = base_floor > 0 ? base_floor : -1;
+
+// Power inlet. The panel is in the plane of the tower's front face, at the back
+// of a straight-sided alcove cut down through the base. The bay behind the
+// panel leaves clip room all round the cutout.
+base_front = -depth / 2;
+base_alcove_w = base_inlet_flange_w + 2 * base_inlet_alcove_gap;
+base_inlet_bay_w = base_inlet_w + 2 * base_inlet_clip_room;
+// Cutout centre: high enough for the flange to clear the desk and for the clip
+// room under the cutout to clear the floor.
+base_inlet_z = max(base_inlet_flange_h / 2 + 1,
+                   base_floor + base_inlet_h / 2 + base_inlet_clip_room);
+base_inlet_bay_top = base_inlet_z + base_inlet_h / 2 + base_inlet_clip_room;
+base_inlet_min_height = max(base_inlet_bay_top + base_wall,
+                            base_inlet_z + base_inlet_flange_h / 2);
+// Any flat bay ceiling between the panel's wall and where the cavity's 45
+// degree roof passes that height. Usually none: with the panel in the tower's
+// plane, the roof reaches out past it.
+base_inlet_bridge = max(0, (depth / 2 - base_wall)
+                         - (inner_d / 2 + base_height - base_inlet_bay_top));
 
 // ----------------------------------------------------------------------------
 // Sanity checks: stop the render with a readable message rather than silently
@@ -224,8 +386,14 @@ assert(min(tab_gap(flat_x, cols_x), tab_gap(flat_y, cols_y)) >= tab_width,
     str("tabs collide after snapping to the half-pitch line; reduce tabs_per_wall ",
         "or tab_width"));
 
-assert(part == "tower" || part == "cap",
-    str("part must be \"tower\" or \"cap\" (got \"", part, "\")"));
+assert(make_base || towers > 0 || make_cap,
+    "nothing to render: turn on make_base or make_cap, or set towers above 0");
+
+assert(towers == round(towers) && towers >= 0,
+    str("towers must be a whole number, 0 or more (got ", towers, ")"));
+
+assert(layout == "print" || layout == "fused" || layout == "assembled",
+    str("layout must be \"print\", \"fused\" or \"assembled\" (got \"", layout, "\")"));
 
 assert(cap_tilt >= 0 && cap_tilt < 45,
     str("cap_tilt must be between 0 and 45 degrees (got ", cap_tilt, ")"));
@@ -233,6 +401,97 @@ assert(cap_tilt >= 0 && cap_tilt < 45,
 assert(cap_tilt_dir == 0 || cap_tilt_dir == 90 || cap_tilt_dir == 180
        || cap_tilt_dir == 270,
     str("cap_tilt_dir must be 0, 90, 180 or 270 (got ", cap_tilt_dir, ")"));
+
+// Base checks only apply when rendering the base, so an awkward base setting
+// never blocks rendering a tower or a cap.
+if (make_base) {
+    assert(base_width >= width && base_depth >= depth,
+        str("base_width/base_depth must be at least the tower's width/depth (",
+            width, " x ", depth, " mm), or the tower overhangs its own base"));
+
+    assert(base_corner_radius <= min(base_width, base_depth) / 2,
+        str("base_corner_radius cannot exceed half the smaller of base_width/base_depth (max ",
+            min(base_width, base_depth) / 2, ")"));
+
+    assert(!base_taper || base_foot < base_height,
+        str("base_foot must be less than base_height (", base_height,
+            ") or there is no room left for the taper"));
+
+    assert(base_screws == 0 || base_screws == 2 || base_screws == 4,
+        str("base_screws must be 0, 2 or 4 (got ", base_screws, ")"));
+
+    assert(base_screw_position == "outside" || base_screw_position == "inside",
+        str("base_screw_position must be \"outside\" or \"inside\" (got \"",
+            base_screw_position, "\")"));
+
+    assert(base_screw_head == "countersunk" || base_screw_head == "counterbore",
+        str("base_screw_head must be \"countersunk\" or \"counterbore\" (got \"",
+            base_screw_head, "\")"));
+
+    if (base_screws > 0) {
+        assert(base_screw_head_d > base_screw_d + 1,
+            "base_screw_head_d must be at least 1 mm larger than base_screw_d");
+
+        assert(base_screw_seat < base_height,
+            str("base_screw_seat must be below the top of the base (", base_height, " mm)"));
+
+        assert(base_screw_head == "counterbore" || base_screw_seat >= base_sink_h + 1,
+            str("base_screw_seat must be at least ", base_sink_h + 1,
+                " mm for a countersink this size, or the cone breaks through the bottom"));
+
+        if (base_screw_position == "inside") {
+            assert(rrect_sd(base_screw_xy, inner_w, inner_d, inner_r) <= -base_head_r,
+                str("the tower's cavity is too small for inside screw holes with a ",
+                    base_screw_head_d, " mm head; use smaller screws or put them outside"));
+        } else {
+            // The recess has to clear the tower above it, and the head has to
+            // land on solid base at the seat height, not hang off the taper.
+            assert(rrect_sd(base_screw_xy, width, depth, corner_radius) >= base_head_r + 0.5,
+                str("base is too small for outside screw holes: the heads would run under ",
+                    "the tower. Widen base_width/base_depth, or use base_screw_position = inside"));
+
+            s = base_section(base_screw_seat);
+            assert(rrect_sd(base_screw_xy, s[0], s[1], s[2]) <= -(base_head_r + 1),
+                str("outside screw heads hang off the edge of the base at the seat height. ",
+                    "Widen the base, raise base_foot, or lower base_screw_seat"));
+        }
+    }
+
+    if (base_hollow) {
+        assert(base_floor < base_height - 1,
+            str("base_floor must be well below base_height (", base_height, " mm)"));
+        assert(base_wall < min(base_width, base_depth) / 4,
+            "base_wall is too thick for this base; thin it or widen the base");
+    }
+
+    if (base_inlet) {
+        assert(base_hollow, "base_inlet needs base_hollow = true: the module sits in the cavity");
+
+        assert(base_height >= base_inlet_min_height,
+            str("base_height must be at least ", base_inlet_min_height,
+                " mm to fit the power inlet (cutout centre ", base_inlet_z,
+                " mm up, clip room above and below, and a ", base_wall, " mm roof)"));
+
+        assert(base_alcove_w <= width - 2 * corner_radius,
+            str("the inlet alcove (", base_alcove_w, " mm) is wider than the flat of the tower's ",
+                "front face (", width - 2 * corner_radius, " mm); widen the tower, reduce ",
+                "corner_radius, or narrow base_inlet_alcove_gap"));
+
+        assert(base_inlet_flange_w > base_inlet_w && base_inlet_flange_h > base_inlet_h,
+            "base_inlet_flange_w/h must be larger than the cutout, or the module falls through");
+
+        assert(base_inlet_panel <= base_wall,
+            str("base_inlet_panel cannot be thicker than base_wall (", base_wall, " mm)"));
+
+        assert(base_inlet_panel + base_inlet_depth <= depth / 2 + inner_d / 2,
+            str("the inlet module is deeper than the tower's core reaches; depth must be at least ",
+                base_inlet_panel + base_inlet_depth + wall, " mm"));
+
+        assert(base_screws == 0 || base_screw_position == "inside"
+               || base_screw_xy[0] - base_column_r >= max(base_inlet_bay_w, base_alcove_w) / 2,
+            "the front outside screw columns run into the inlet alcove; widen base_width or put the screws inside");
+    }
+}
 
 // ----------------------------------------------------------------------------
 // Pattern layout
@@ -410,11 +669,11 @@ module shell() {
     }
 }
 
-module skadis_tower() {
+module skadis_tower(tabs = stackable, pockets = true) {
     difference() {
         union() {
             shell();
-            if (stackable) all_joints(pocket = false);
+            if (tabs) all_joints(pocket = false);
         }
         // Width faces (normal to Y), then depth faces (normal to X). The depth
         // faces take the opposite parity so the corners stagger.
@@ -424,9 +683,10 @@ module skadis_tower() {
         face_pattern(cols_y, width / 2,  90, p);
         face_pattern(cols_y, width / 2, -90, p);
 
-        // Pockets are cut unconditionally: even a segment with no tabs of its
-        // own has to drop onto the one below.
-        all_joints(pocket = true);
+        // Pockets don't depend on `tabs`: even a segment with no tabs of its
+        // own has to drop onto the one below. They are left out only when the
+        // piece below is fused on.
+        if (pockets) all_joints(pocket = true);
     }
 }
 
@@ -446,7 +706,7 @@ module skadis_tower() {
 // tab pockets, which are self-supporting arches by design.
 // ----------------------------------------------------------------------------
 
-module skadis_cap() {
+module skadis_cap(pockets = true) {
     difference() {
         intersection() {
             // Tall enough to be trimmed by the tilted face at every point.
@@ -454,7 +714,7 @@ module skadis_cap() {
                 rrect(width, depth, corner_radius);
             cap_tilt_cut();
         }
-        all_joints(pocket = true);
+        if (pockets) all_joints(pocket = true);
     }
 }
 
@@ -471,6 +731,156 @@ module cap_tilt_cut() {
             rotate([cap_tilt, 0, 0])
                 translate([0, 0, -big / 2])
                     cube(big, center = true);
+}
+
+// ----------------------------------------------------------------------------
+// Base
+//
+// A footing that the bottom tower segment drops onto. It carries the same tabs
+// as the top of a segment, from the same `all_joints()`, so it seats in the
+// pockets every segment already has underneath. The top face is exactly the
+// tower's outline, so with the taper on the sides run straight into the tower.
+//
+// Hollow by default: just walls, open at the bottom and at the top into the
+// tower's core so wires can run up the middle. The cavity's roof is held to 45
+// degrees by intersecting it with a pyramid grown down from the core opening,
+// so it prints without supports. Solid is still an option, for a base that is
+// all ballast.
+//
+// The optional power inlet is recessed: a straight-sided alcove is cut down
+// through the front of the base to the plane of the tower's front face, and the
+// inlet sits in that plane, flush with the tower above it. The alcove is open
+// to the sky, so it has no roof to support, and the cavity's 45 degree roof
+// reaches out over the bay behind the panel.
+//
+// Prints as modeled: flat bottom on the plate, the taper slopes inward going
+// up, the tabs are free-standing, and the screw recesses all open upward.
+// ----------------------------------------------------------------------------
+
+module skadis_base(tabs = true) {
+    union() {
+        difference() {
+            base_body();
+            if (base_hollow) base_cavity();
+            for (s = base_screw_signs)
+                translate([s[0] * base_screw_xy[0], s[1] * base_screw_xy[1], 0])
+                    base_screw_hole();
+            if (base_inlet) {
+                base_alcove();
+                translate([-base_inlet_w / 2, base_front - 1, base_inlet_z - base_inlet_h / 2])
+                    cube([base_inlet_w, base_inlet_panel + 2, base_inlet_h]);
+            }
+        }
+        // all_joints() builds tabs standing on z = height; move them down onto
+        // the top of the base. Added after the cavity is cut: their inner faces
+        // sit exactly on the core opening.
+        if (tabs) translate([0, 0, base_height - height]) all_joints(pocket = false);
+    }
+}
+
+module base_body() {
+    if (base_taper) {
+        hull() {
+            linear_extrude(max(base_foot, eps))
+                rrect(base_width, base_depth, base_corner_radius);
+            translate([0, 0, base_height - eps])
+                linear_extrude(eps) rrect(width, depth, corner_radius);
+        }
+    } else {
+        linear_extrude(base_height)
+            rrect(base_width, base_depth, base_corner_radius);
+    }
+}
+
+// Everything in front of the tower's front face across the alcove's width,
+// grown by `grow` at the sides and back.
+module base_alcove(grow = 0) {
+    translate([-base_alcove_w / 2 - grow, -base_depth / 2 - 1, -1])
+        cube([base_alcove_w + 2 * grow, (base_depth - depth) / 2 + 1 + grow,
+              base_height + 2]);
+}
+
+module base_cavity() {
+    difference() {
+        intersection() {
+            base_cavity_limit();
+            union() {
+                base_cavity_roof();
+                if (base_inlet)
+                    translate([-base_inlet_bay_w / 2, base_front + base_inlet_panel, base_cavity_z0])
+                        cube([base_inlet_bay_w, base_inlet_depth + 1,
+                              base_inlet_bay_top - base_cavity_z0]);
+            }
+        }
+        // Solid columns carry outside screws up through the cavity.
+        if (base_screw_position == "outside")
+            for (s = base_screw_signs)
+                translate([s[0] * base_screw_xy[0], s[1] * base_screw_xy[1], 0])
+                    cylinder(r = base_column_r, h = base_height + 1);
+        // Solid pads under inside screw heads, each webbed out to its corner of
+        // the wall so it isn't a loose island when there is no floor.
+        if (base_screw_position == "inside")
+            for (s = base_screw_signs)
+                hull() {
+                    translate([s[0] * base_screw_xy[0], s[1] * base_screw_xy[1], -1])
+                        cylinder(r = base_column_r, h = base_screw_seat + 1);
+                    translate([s[0] * base_width / 2, s[1] * base_depth / 2, -1])
+                        cylinder(r = base_column_r, h = base_screw_seat + 1);
+                }
+        // Walls around the inlet alcove.
+        if (base_inlet) base_alcove(grow = base_wall);
+    }
+    // Thin the front wall around the cutout to panel thickness, so the clips
+    // can catch behind it.
+    if (base_inlet)
+        translate([-base_inlet_bay_w / 2, base_front + base_inlet_panel,
+                   base_inlet_z - base_inlet_h / 2 - base_inlet_clip_room])
+            cube([base_inlet_bay_w, base_wall - base_inlet_panel + 1,
+                  base_inlet_h + 2 * base_inlet_clip_room]);
+}
+
+// The body shrunk by base_wall (horizontally), sitting on the floor or, with no
+// floor, running out through the bottom. At the
+// top it narrows to the tower's core, so where the base meets the tower its wall
+// is the tower's wall and the tabs stand on solid material.
+module base_cavity_limit() {
+    low = base_taper ? max(base_floor, base_foot) : base_floor;
+    s = base_section(low);
+    hull() {
+        translate([0, 0, base_cavity_z0])
+            linear_extrude(max(low - base_cavity_z0, eps))
+                rrect(s[0] - 2 * base_wall, s[1] - 2 * base_wall, max(s[2] - base_wall, 0));
+        translate([0, 0, base_height])
+            linear_extrude(1)
+                if (base_taper) rrect(inner_w, inner_d, inner_r);
+                else rrect(base_width - 2 * base_wall, base_depth - 2 * base_wall,
+                           max(base_corner_radius - base_wall, 0));
+    }
+}
+
+// The tower's core opening, grown outward 1 mm for every 1 mm down: anything
+// inside it has a roof no flatter than 45 degrees.
+module base_cavity_roof() {
+    g = base_height - base_cavity_z0;
+    hull() {
+        translate([0, 0, base_height])
+            linear_extrude(1) rrect(inner_w, inner_d, inner_r);
+        translate([0, 0, base_cavity_z0])
+            linear_extrude(eps) rrect(inner_w + 2 * g, inner_d + 2 * g, inner_r + g);
+    }
+}
+
+// One screw hole, at the origin: a shank clearance hole straight through, and a
+// recess for the head from the seat up through the top surface, so a driver can
+// reach it whatever the surface does above.
+module base_screw_hole() {
+    clear = base_height + 1;
+    translate([0, 0, -1]) cylinder(d = base_screw_d, h = clear + 1);
+    if (base_screw_head == "countersunk")
+        translate([0, 0, base_screw_seat - base_sink_h])
+            cylinder(d1 = base_screw_d, d2 = base_screw_head_d, h = base_sink_h + eps);
+    translate([0, 0, base_screw_seat])
+        cylinder(d = base_screw_head_d, h = clear);
 }
 
 // The slot pattern for one face.
@@ -490,26 +900,110 @@ module face_pattern(cols, face_off, spin, parity = 0) {
                         slot_cutter(wall);
 }
 
-if (part == "cap") skadis_cap();
-else               skadis_tower();
+// ----------------------------------------------------------------------------
+// Layout
+//
+// Every piece in the run, bottom of the stack to top, as [kind, index]:
+// kind 0 is the base, 1 a tower segment, 2 the cap.
+// ----------------------------------------------------------------------------
 
-if (part == "cap") {
-    echo(str("Skadis cap: ", width, " x ", depth, " mm, ", cap_tilt,
-             " deg tilt, high edge at ", cap_tilt_dir, " deg"));
-    echo(str("  thickness: ", cap_base, " mm at the low edge, ",
-             cap_base + cap_rise, " mm at the high edge"));
-    echo(str("  rise: ", cap_rise, " mm across the ", cap_span, " mm span"));
-    echo(str("  pockets: ", tabs_per_wall * 4, " x ", tab_width, " mm wide, ",
-             tab_height + tab_clearance, " mm deep, ", cap_roof,
-             " mm of material above"));
-    echo("  solid in the model on purpose - set infill in the slicer");
-} else {
-echo(str("Skadis tower: ", width, " x ", depth, " x ", height, " mm"));
+pieces = concat(make_base ? [[0, 0]] : [],
+                [for (i = [0 : 1 : towers - 1]) [1, i]],
+                make_cap ? [[2, 0]] : []);
+
+// Every segment below the top one carries tabs for the next. The top one does
+// when the cap goes on it, or when `stackable` asks for them.
+top_tabs = make_cap || stackable;
+
+function piece_w(p) = p[0] == 0 ? base_width : width;
+
+// Print layout: centres along X, left to right in stack order, layout_gap apart.
+function piece_x(n) = n <= 0 ? 0
+    : piece_x(n - 1) + (piece_w(pieces[n - 1]) + piece_w(pieces[n])) / 2 + layout_gap;
+row_len = len(pieces) > 0 ? piece_x(len(pieces) - 1) : 0;
+
+// Fused and assembled layouts: the height each piece's bottom sits at.
+tower_z0 = make_base ? base_height : 0;
+function piece_z(p) = p[0] == 0 ? 0 : tower_z0 + (p[0] == 1 ? p[1] : towers) * height;
+stack_h = tower_z0 + towers * height + (make_cap ? cap_base + cap_rise : 0);
+
+// In the fused layout a piece drops the joint on any side that another piece
+// in the run is fused to; the ends of the run keep theirs. The pieces then
+// meet face to face and union into one solid.
+fused = layout == "fused";
+
+module piece(n) {
+    p = pieces[n];
+    below = fused && n > 0;
+    above = fused && n < len(pieces) - 1;
+    if      (p[0] == 0) skadis_base(tabs = !above);
+    else if (p[0] == 1) skadis_tower(tabs = !above && (p[1] < towers - 1 || top_tabs),
+                                     pockets = !below);
+    else                skadis_cap(pockets = !below);
+}
+
+for (n = [0 : 1 : len(pieces) - 1])
+    if (layout == "print")
+        translate([piece_x(n) - row_len / 2, 0, 0]) piece(n);
+    else
+        translate([0, 0, piece_z(pieces[n])]) piece(n);
+
+echo(str("Run: ", make_base ? "base, " : "", towers, " tower segment", towers == 1 ? "" : "s",
+         make_cap ? ", cap" : "", " - ", layout, " layout",
+         layout == "print" ? str(", ", len(pieces) > 0 ? row_len + piece_w(pieces[0]) / 2
+                                         + piece_w(pieces[len(pieces) - 1]) / 2 : 0,
+                                 " mm long row")
+                           : str(", ", stack_h, " mm tall to the top surface",
+                                 fused ? " as one solid" : "")));
+if (fused && make_cap && towers > 0)
+    echo(str("  the cap's underside spans the tower's core: a ", min(inner_w, inner_d),
+             " mm bridge"));
+
+if (make_base) {
+    echo(str("Skadis base: ", base_width, " x ", base_depth, " mm footprint, ",
+             base_height, " mm tall, ",
+             base_taper ? str("tapering to the ", width, " x ", depth, " mm tower above a ",
+                              base_foot, " mm foot")
+                        : "straight sides"));
+    echo(str("  tabs: ", tabs_per_wall * 4, " on top, for the lowest tower segment"));
+    echo(base_screws == 0 ? "  screw holes: none"
+        : str("  screw holes: ", base_screws, " ", base_screw_position, ", ",
+              base_screw_d, " mm shank, ", base_screw_head_d, " mm ", base_screw_head,
+              " head seated ", base_screw_seat, " mm above the floor, at (+/-",
+              base_screw_xy[0], ", +/-", base_screw_xy[1], ")"));
+    if (base_screws > 0 && base_screw_position == "inside")
+        echo("  inside holes are covered by the tower: screw the base down first");
+    echo(base_hollow
+        ? str("  hollow: ", base_wall, " mm walls, ",
+              base_floor > 0 ? str(base_floor, " mm floor") : "open bottom",
+              ", open into the tower's core for wiring")
+        : "  solid in the model on purpose - set infill in the slicer");
+    if (base_inlet) {
+        echo(str("  power inlet: ", base_inlet_w, " x ", base_inlet_h,
+                 " mm cutout flush with the tower's front (-Y) face, centred ", base_inlet_z,
+                 " mm up, in a ", base_inlet_panel, " mm panel"));
+        echo(str("  alcove: ", base_alcove_w, " mm wide, ", (base_depth - depth) / 2,
+                 " mm deep, open at the top"));
+        echo(str("  inlet needs base_height >= ", base_inlet_min_height, " mm; ",
+                 base_inlet_bridge > 0 ? str("the bay ceiling is a ", base_inlet_bridge, " mm bridge")
+                                       : "no bridges"));
+    }
+}
+
+if (towers > 0) {
+echo(str("Skadis tower: ", towers, " x ", width, " x ", depth, " x ", height, " mm"));
 echo(str("  width faces: ", cols_x, " cols x ", rows, " rows (checkerboard)"));
 echo(str("  depth faces: ", cols_y, " cols x ", rows, " rows (checkerboard)"));
-echo(str("  stacking: ", tabs_per_wall * 4, " pockets underneath, ",
-         stackable ? str(tabs_per_wall * 4, " tabs on top")
-                   : "no tabs on top (flat top, use this as the last segment)",
+if (fused)
+echo(str("  fused: one solid, ", make_base ? "joined to the base, " : str(tabs_per_wall * 4,
+         " pockets underneath, "), make_cap ? "joined to the cap" : top_tabs
+         ? str(tabs_per_wall * 4, " tabs on top") : "flat top"));
+else
+echo(str("  stacking: ", tabs_per_wall * 4, " pockets underneath each segment, ",
+         towers > 1 ? str(tabs_per_wall * 4, " tabs on top of all but the top one, which has ")
+                    : "",
+         top_tabs ? str(tabs_per_wall * 4, " tabs on top", make_cap ? " for the cap" : "")
+                  : "no tabs on top (flat top, the last segment)",
          " - ", tab_width, " x ", tab_height, " mm, dome r=", tab_r));
 echo(str("  minimum width/depth at these settings: ", min_face, " mm"));
 echo(str("  minimum height at these settings: ", min_height, " mm"));
@@ -523,6 +1017,18 @@ echo(stack_ok
           " mm pitch, so stacked segments will NOT keep Skadis spacing across the",
           " joint. Nearest good heights: ", floor(height / grid) * grid, " or ",
           ceil(height / grid) * grid, " mm"));
+}
+
+if (make_cap) {
+    echo(str("Skadis cap: ", width, " x ", depth, " mm, ", cap_tilt,
+             " deg tilt, high edge at ", cap_tilt_dir, " deg"));
+    echo(str("  thickness: ", cap_base, " mm at the low edge, ",
+             cap_base + cap_rise, " mm at the high edge"));
+    echo(str("  rise: ", cap_rise, " mm across the ", cap_span, " mm span"));
+    echo(str("  pockets: ", tabs_per_wall * 4, " x ", tab_width, " mm wide, ",
+             tab_height + tab_clearance, " mm deep, ", cap_roof,
+             " mm of material above"));
+    echo("  solid in the model on purpose - set infill in the slicer");
 }
 
 // ============================================================================
