@@ -17,9 +17,9 @@ pieces to get a whole stack in one run.
 
 | Parameter | Default | What it is |
 | --- | --- | --- |
-| `make_base` | false | A hollow footing with tabs on top for the lowest segment. Wider than the tower, optionally tapered, with optional screw holes and an optional power inlet. |
+| `make_base` | true | A hollow footing with tabs on top for the lowest segment. Usually wider than the tower, optionally tapered, with optional screw holes and an optional power inlet. |
 | `towers` | 1 | How many tower segments. Skadis slots on all four faces, tabs on top, pockets underneath. 0 leaves the tower out. |
-| `make_cap` | false | A solid lid with no slots and a tilted top face, for closing off a stack. |
+| `make_cap` | false | A lid with a tilted top face, for closing off a stack. |
 | `layout` | print | `print` sets the pieces side by side, each standing the way it prints, `layout_gap` (10 mm) apart, to print separately and stack. `fused` stacks them and joins them into one solid, to print the whole tower in one go. `assembled` stacks them as they go together, so you can see the whole thing; the tabs sit loose in their pockets, so don't print from it. |
 
 In a run with several segments, every segment except the top one gets tabs. The top one
@@ -32,7 +32,7 @@ to slice. If a slicer imports them as one object, use its split-to-objects comma
 With `layout = fused`, the run prints as a single solid instead: the pieces are stacked
 and the joints between them are left out, so there are no tabs, pockets or seams inside
 the tower. The slot pattern carries straight on across where the joints would be, as
-long as `height` is a whole multiple of `grid`. The ends of the run keep their joints —
+long as `height` is a whole multiple of the 20 mm grid. The ends of the run keep their joints —
 pockets underneath if there's no base, tabs on top if there's no cap and `stackable` is
 on — so a fused tower still stacks with separately printed pieces.
 
@@ -53,7 +53,7 @@ drift out of sync with the tower the first time you change a tab setting.
 
 1. Open `skadis_tower.scad` in OpenSCAD.
 2. Open the Customizer (`Window > Customizer`).
-3. Set `width`, `depth` and `height`. Keep `height` a whole multiple of `grid` (20 mm) —
+3. Set `width`, `depth` and `height`. Keep `height` a whole multiple of the 20 mm grid —
    the console tells you if it isn't, and suggests the nearest good values.
 4. Choose the pieces under Parts. Set `layout = assembled` to check how the stack looks,
    then set it to `print` (separate pieces) or `fused` (one piece) before you export.
@@ -69,9 +69,9 @@ settings, material left at the ends, and whether the height stacks cleanly.
 | Parameter | Default | Notes |
 | --- | --- | --- |
 | `width`, `depth` | 80 | Outside dimensions in mm. |
-| `height` | 160 | One segment. Keep it a multiple of `grid`. |
+| `height` | 160 | One segment. Keep it a multiple of the 20 mm grid. |
 | `corner_radius` | 6 | 0 gives sharp corners. |
-| `wall` | 4.5 | See [Wall thickness](#wall-thickness). |
+| `wall` | 4.5 | One thickness for the tower, base and cap walls. See [Wall thickness](#wall-thickness). |
 
 ### Stacking
 
@@ -86,14 +86,14 @@ settings, material left at the ends, and whether the height stacks cleanly.
 
 ### Skadis pattern
 
+The slot size (5 × 15 mm) and the 20 mm grid pitch are IKEA's and are fixed, since accessories only
+fit the real board. The settings here tune how the pattern prints and where it goes.
+
 | Parameter | Default | Notes |
 | --- | --- | --- |
-| `slot_width` | 5 | The IKEA dimension. See [Slot fit](#slot-fit) before changing it. |
-| `slot_height` | 15 | The IKEA dimension. |
-| `grid` | 20 | Pattern pitch. The IKEA board is 20. |
 | `slot_fit` | 0.2 | Printing allowance on the slot **width** only. |
 | `slot_fillet` | 0.8 | Rounds each slot opening, inside and out. |
-| `alternate_corners` | true | Staggers the pattern where two faces meet. |
+| `alternate_corners` | true | Staggers the pattern where two faces meet. Opposite faces are always mirror images. |
 | `slots_front`, `slots_back`, `slots_left`, `slots_right` | true, false, true, true | Which faces carry the Skadis pattern. The back is off by default, for a tower that stands against a wall. Turn any face on or off. Front is -Y; back is +Y, the side the base's power inlet is on. |
 | `edge_margin` | 4 | Minimum material between a slot and a rounded corner. |
 
@@ -105,18 +105,18 @@ settings, material left at the ends, and whether the height stacks cleanly.
 | `cap_tilt_dir` | 180 | Which edge is the high one: 0 back (+Y), 90 left (-X), 180 front (-Y), 270 right (+X). The front default tips a speaker back toward you. |
 | `cap_roof` | 4 | Material over the pockets at the low edge. Sets the cap's thickness. |
 | `cap_open` | false | Opens the middle, leaving a collar: the tower's walls cut off at the tilt. The speaker sits on a slanted rim, and cables come straight up the core. |
+| `cap_slots` | true | Carries the Skadis pattern on up an open cap, on the faces that have it, wherever a whole slot fits under the tilted top with 2 mm to spare. Usually a row toward the high edge. Needs `cap_open`, since a hook needs the hollow core behind it. |
 
 ### Base
 
 | Parameter | Default | Notes |
 | --- | --- | --- |
-| `base_offset_width`, `base_offset_depth` | 20, 20 | Flange on each side of the tower in mm, in X and Y. The footprint at the floor is the tower's outline grown by these, so it follows `width`/`depth` and is never narrower than the tower: 80 mm + 2 × 20 = 120 mm at the defaults. The flange resists tipping. |
+| `base_offset_width`, `base_offset_depth` | 20, 20 | Flange on each side of the tower in mm, in X and Y. The footprint at the floor is the tower's outline grown by these, so it follows `width`/`depth`: 80 mm + 2 × 20 = 120 mm at the defaults. The flange resists tipping. 0 makes the base flush with the tower. A negative value tucks the foot in under the tower and flares the sides out to meet it; this needs `base_taper` and must stay at 45° or shallower. With either one at 0 or below, the screw holes go inside. |
 | `base_height` | 20 | Height in mm, not counting the tabs on top. |
 | `base_corner_radius` | 12 | Corner radius of the footprint at the floor. |
 | `base_taper` | true | Slopes the sides from the footprint in to the tower's outline, so the base flows into the tower. Off gives a straight-sided block. |
 | `base_foot` | 4 | Straight section at the bottom before the taper starts, so the edge isn't a knife edge. |
-| `base_hollow` | true | Hollow walls that open up into the tower's core, so wires can run up the middle. Off gives a solid base: all ballast. |
-| `base_wall` | 3 | Wall thickness of a hollow base. The walls thicken toward the top, where they meet the tower wall. |
+| `base_hollow` | true | Hollow walls that open up into the tower's core, so wires can run up the middle. The walls are `wall` thick, the same as the tower and cap. Off gives a solid base: all ballast. |
 | `base_floor` | 0 | Floor thickness of a hollow base. 0 leaves the bottom open, so the base is just walls: lighter, quicker to print, and wires can come in from below too. |
 
 ### Base screw holes
@@ -124,7 +124,7 @@ settings, material left at the ends, and whether the height stacks cleanly.
 | Parameter | Default | Notes |
 | --- | --- | --- |
 | `base_screws` | 4 | 0, 2 (diagonal corners) or 4. |
-| `base_screw_position` | outside | `outside`: in the flange, reachable with the tower in place. `inside`: under the tower's hollow core, hidden once the tower is on, so screw the base down first. |
+| `base_screw_position` | outside | `outside`: in the flange, reachable with the tower in place. `inside`: under the tower's hollow core, hidden once the tower is on, so screw the base down first. With either base offset at 0 or below there is no flange, so the holes go inside whatever this says. |
 | `base_screw_d` | 4.5 | Shank clearance hole. 4.5 suits a #8 / 4 mm wood screw. |
 | `base_screw_head` | countersunk | `countersunk` (90° cone, flat-head screws) or `counterbore` (flat recess, pan-head or cap screws). |
 | `base_screw_head_d` | 9 | Head diameter plus a little clearance. |
@@ -134,6 +134,8 @@ Outside holes sit midway across the flange. If they would run under the tower or
 a tapered edge, the render stops with a message that says what to change. In a hollow
 base, outside holes pass through solid columns from the bottom to the top surface. Inside
 holes seat on solid pads, each webbed out to its corner of the wall, so they work with no floor.
+They sit in the corners of the core, or of the foot when a negative offset makes the foot the
+tighter fit.
 
 ### Base power inlet
 
@@ -147,7 +149,8 @@ The inlet is recessed. An alcove is cut down through the back of the base, so th
 sits flush with the tower's back face instead of the base's outer edge. The plug then
 stands out less, and that face still lines up with the tower above it. The alcove needs
 the flat part of the tower's back face to be wide enough. With the default 6 mm
-`corner_radius`, the tower has to be at least 67 mm wide.
+`corner_radius`, the tower has to be at least 67 mm wide. The inlet also needs
+`base_offset_depth` of 0 or more, so the base reaches out to the tower's back face.
 
 The defaults are sized for this module:
 [DEVMO 3D Printer Power Switch, 10A inlet module with 250V fuse and switch](https://www.amazon.com/dp/B0899ZHDNP)
@@ -158,7 +161,7 @@ printing**, and adjust the cutout first.
 
 | Parameter | Default | Notes |
 | --- | --- | --- |
-| `base_inlet` | false | Turn on to cut the inlet. Needs `base_hollow` and a taller base, about 40 mm (39.5 at the defaults). The console gives the exact minimum. |
+| `base_inlet` | false | Turn on to cut the inlet. Needs `base_hollow` and a taller base, 39.5 mm at the defaults. The console gives the exact minimum. |
 | `base_inlet_w`, `base_inlet_h` | 47.5, 28.5 | Panel cutout. |
 | `base_inlet_flange_w`, `base_inlet_flange_h` | 50.5, 31.5 | The module's front flange. It sits on the back wall of the alcove. |
 | `base_inlet_alcove_gap` | 2 | Space between the flange and each side of the alcove. |
@@ -272,8 +275,8 @@ quietly weaken the stacking joint.
 <a name="slot-fit"></a>
 ### Slot fit
 
-`slot_fit` is a **compensation, not a looseness knob**, which is why it is separate from
-`slot_width`.
+`slot_fit` is a **compensation, not a looseness knob**. The slot width itself is fixed at
+IKEA's 5 mm.
 
 The slot is an interface dimension — accessories are moulded against 5 × 15 — and a snug
 width is what stops a loaded hook tilting in its slot. Going deliberately oversize makes

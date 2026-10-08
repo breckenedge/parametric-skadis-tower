@@ -34,7 +34,7 @@
 // first time you change a tab setting.
 //
 // A base for the bottom of the stack.
-make_base = false;
+make_base = true;
 // How many tower segments. 0 leaves the tower out.
 towers = 1;         // [0:1:10]
 // A tilted cap for the top of the stack.
@@ -96,10 +96,9 @@ tab_clearance = 0.25; // [0:0.05:0.8]
 
 /* [Skadis pattern] */
 
-// Slot width, mm (IKEA Skadis = 5)
-slot_width = 5;     // [3:0.1:8]
-// Slot height, mm (IKEA Skadis = 15)
-slot_height = 15;   // [10:0.5:25]
+// The slot size and grid pitch are fixed to IKEA's board (see Hidden below):
+// accessories only fit the real dimensions. These settings tune the print.
+//
 // Printing allowance added to the slot WIDTH only, mm. FDM holes come out
 // undersize in the wall plane -- extrusion overlap on the inside of the curve
 // eats a tenth or two -- so a nominal 5 mm slot often measures 4.8 and hooks
@@ -108,8 +107,6 @@ slot_height = 15;   // [10:0.5:25]
 // and tune. Height is left alone: Z lands where it is told, and the slot roof
 // is an arch, so there is nothing to compensate there.
 slot_fit = 0.2;     // [0:0.05:0.6]
-// Pattern grid pitch, mm (IKEA Skadis = 20)
-grid = 20;          // [10:1:40]
 // Fillet radius around each slot opening, mm. Applied inside and out.
 slot_fillet = 0.8;  // [0:0.1:2]
 // Run the left/right faces out of phase with the front/back, so the gap to the
@@ -128,8 +125,8 @@ edge_margin = 4;    // [2:0.5:20]
 
 /* [Cap] */
 
-// A lid with no slots, for closing off the top of a stack: solid, or an open
-// collar with `cap_open`.
+// A lid for closing off the top of a stack: solid, or an open collar with
+// `cap_open`.
 //
 // Tilt of the cap's top face, degrees from horizontal. 10 aims a desktop
 // speaker up toward seated ear height. 0 gives a plain flat lid.
@@ -148,6 +145,11 @@ cap_roof = 4;       // [2:0.5:15]
 // tilt, so the speaker sits on a slanted rim and cables come straight up the
 // core. Off gives a solid lid.
 cap_open = false;
+// Carry the tower's Skadis pattern on up the open collar, on the faces that have
+// it, wherever a whole slot fits under the tilted top. A tall or steep cap gets
+// a row or more, mostly toward the high edge. Needs cap_open: a hook needs the
+// hollow core behind the slot.
+cap_slots = true;
 
 /* [Base] */
 
@@ -155,15 +157,18 @@ cap_open = false;
 // under the lowest tower segment, the same way one segment seats on another.
 //
 // The base's footprint follows the tower: it is the tower's outline grown by a
-// flange on every side, so it can never come out narrower than the tower. The
-// flange resists tipping and carries the outside screw holes.
+// flange on every side. The flange resists tipping and carries the outside
+// screw holes. 0 gives a base flush with the tower. A negative flange tucks the
+// foot in under the tower and flares out to meet it (needs base_taper, and no
+// steeper than 45 degrees). With either flange 0 or less there is no room
+// outside the tower, so the screw holes go inside.
 //
 // Flange on each side in X (left and right), mm. The footprint at the floor is
 // `width` plus twice this.
-base_offset_width = 20; // [0:0.5:250]
+base_offset_width = 20; // [-50:0.5:250]
 // Flange on each side in Y (front and back), mm. The footprint at the floor is
 // `depth` plus twice this.
-base_offset_depth = 20; // [0:0.5:250]
+base_offset_depth = 20; // [-50:0.5:250]
 // Height of the base (Z), mm, not counting the tabs on top.
 base_height = 20;   // [3:0.5:100]
 // Corner radius of the footprint at the floor, mm.
@@ -176,11 +181,9 @@ base_taper = true;
 base_foot = 4;      // [0:0.5:50]
 // Hollow the base out into a closed box that opens up into the tower's core, so
 // wires can run up the middle. Off gives a solid base: more weight down low,
-// with the slicer's infill as the knob.
+// with the slicer's infill as the knob. The walls are `wall` thick, the same
+// as the tower's and the cap's.
 base_hollow = true;
-// Wall thickness of a hollow base, mm. The walls thicken toward the top, where
-// they meet the tower wall.
-base_wall = 3;      // [1.2:0.1:10]
 // Floor thickness of a hollow base, mm. 0 leaves the bottom open, so the base
 // is just walls: lighter, faster to print, and wires can also come in from
 // below. Screws get solid pads or columns either way.
@@ -219,7 +222,8 @@ base_inlet_alcove_gap = 2; // [0:0.5:20]
 base_screws = 4;    // [0:none, 2:2 (diagonal corners), 4:4 (all corners)]
 // Where the holes go.
 //   outside - in the flange around the tower, reachable with the tower in place.
-//             Needs a base wider than the tower.
+//             Needs a base wider than the tower; with either base offset 0 or
+//             less the holes go inside whatever this says.
 //   inside  - under the tower's hollow core, hidden once the tower is on. Screw
 //             the base down first, then drop the tower onto it.
 base_screw_position = "outside"; // [outside, inside]
@@ -241,6 +245,18 @@ $fn = 48;
 eps = 0.01;
 // Slices used to approximate each fillet. More = smoother, slower.
 fillet_steps = 6;
+
+// The IKEA Skadis board. Fixed: accessories are moulded to fit these, so they
+// are not settings. To make a printed slot come out this size, tune slot_fit.
+slot_width = 5;     // slot width, mm
+slot_height = 15;   // slot height, mm
+grid = 20;          // pattern pitch, mm
+
+// Solid material over the power inlet's bay, under the top of the base, mm.
+base_inlet_roof = 3;
+
+// Least material between a cap slot's opening and the tilted top, mm.
+cap_slot_roof = 2;
 
 // ----------------------------------------------------------------------------
 // Derived values
@@ -278,6 +294,12 @@ cap_base = tab_height + tab_clearance + cap_roof;
 cap_span = (cap_tilt_dir == 90 || cap_tilt_dir == 270) ? width : depth;
 cap_rise = cap_span * tan(cap_tilt);
 
+// Height of the cap's tilted top over the point (x, y), from the cap's bottom.
+// The same plane cap_tilt_cut() builds: cap_base at the low edge.
+function cap_top(x, y) =
+    cap_base + cap_rise / 2
+    + (y * cos(cap_tilt_dir) - x * sin(cap_tilt_dir)) * tan(cap_tilt);
+
 // Dome radius of a tab: a full semicircle across the tab, so the matching
 // pocket roof is a self-supporting arch.
 tab_r = tab_width / 2;
@@ -307,12 +329,33 @@ function rrect_sd(p, w, d, r) =
          qy = abs(p[1]) - (d / 2 - r))
     norm([max(qx, 0), max(qy, 0)]) + min(max(qx, qy), 0) - r;
 
+// How far the sides run outward going up the taper, mm, at the worst of the
+// sides and corners: positive where the base flares out to meet a tower wider
+// than its foot. A rounded corner moves out along the line between its two
+// corner centres, by that distance plus the change in radius.
+base_corner_shift = [base_corner_radius - corner_radius - base_offset_width,
+                     base_corner_radius - corner_radius - base_offset_depth];
+base_flare = max(-base_offset_width, -base_offset_depth,
+                 norm([max(base_corner_shift[0], 0), max(base_corner_shift[1], 0)])
+                     + corner_radius - base_corner_radius);
+
+// With no flange on one side there is nowhere outside the tower for a screw,
+// so the holes go inside whatever base_screw_position says.
+base_screws_forced_inside = min(base_offset_width, base_offset_depth) <= 0;
+base_screws_inside = base_screw_position == "inside" || base_screws_forced_inside;
+
 // One screw position per quadrant, mirrored into the others. Outside holes sit
 // midway across the flange; inside holes tuck into the cavity's corners, clear
-// of its rounded corner and of the tabs, which stay within the wall.
+// of its rounded corner and of the tabs, which stay within the wall. A foot
+// tucked in under the tower can be the tighter fit, so they also keep the head
+// 1 mm inside its rounded corner.
 base_screw_inset = base_head_r + inner_r + 1;
-base_screw_xy = base_screw_position == "inside"
-    ? [inner_w / 2 - base_screw_inset, inner_d / 2 - base_screw_inset]
+base_foot_screw_inset =
+    let (h = base_head_r + 1, r = base_corner_radius)
+    max(h, r - (r - h) / sqrt(2)) + 0.5;
+base_screw_xy = base_screws_inside
+    ? [min(inner_w / 2 - base_screw_inset, base_width / 2 - base_foot_screw_inset),
+       min(inner_d / 2 - base_screw_inset, base_depth / 2 - base_foot_screw_inset)]
     : [(width + base_width) / 4, (depth + base_depth) / 4];
 
 base_screw_signs = base_screws == 4 ? [[1, 1], [-1, 1], [-1, -1], [1, -1]]
@@ -322,7 +365,7 @@ base_screw_signs = base_screws == 4 ? [[1, 1], [-1, 1], [-1, -1], [1, -1]]
 // In a hollow base, outside screws pass through a solid column from the floor
 // to the top surface, so the head is reachable from above. Inside screws stand
 // on a solid pad as tall as the seat, so they work with no floor at all.
-base_column_r = base_head_r + base_wall;
+base_column_r = base_head_r + wall;
 
 // Where the cavity starts: on the floor, or just below the bottom face when
 // there is no floor, so the cut opens cleanly through it.
@@ -340,12 +383,12 @@ base_inlet_bay_w = base_inlet_w + 2 * base_inlet_clip_room;
 base_inlet_z = max(base_inlet_flange_h / 2 + 1,
                    base_floor + base_inlet_h / 2 + base_inlet_clip_room);
 base_inlet_bay_top = base_inlet_z + base_inlet_h / 2 + base_inlet_clip_room;
-base_inlet_min_height = max(base_inlet_bay_top + base_wall,
+base_inlet_min_height = max(base_inlet_bay_top + base_inlet_roof,
                             base_inlet_z + base_inlet_flange_h / 2);
 // Any flat bay ceiling between the panel's wall and where the cavity's 45
 // degree roof passes that height. Usually none: with the panel in the tower's
 // plane, the roof reaches out past it.
-base_inlet_bridge = max(0, (depth / 2 - base_wall)
+base_inlet_bridge = max(0, (depth / 2 - wall)
                          - (inner_d / 2 + base_height - base_inlet_bay_top));
 
 // ----------------------------------------------------------------------------
@@ -428,8 +471,18 @@ assert(cap_tilt_dir == 0 || cap_tilt_dir == 90 || cap_tilt_dir == 180
 // Base checks only apply when rendering the base, so an awkward base setting
 // never blocks rendering a tower or a cap.
 if (make_base) {
-    assert(base_offset_width >= 0 && base_offset_depth >= 0,
-        "base_offset_width/base_offset_depth cannot be negative, or the tower overhangs its own base");
+    assert(base_taper || (base_offset_width >= 0 && base_offset_depth >= 0),
+        "a negative base_offset_width/base_offset_depth needs base_taper = true, or the tower overhangs a straight-sided base");
+
+    assert(base_width > 2 * wall + 10 && base_depth > 2 * wall + 10,
+        str("the base's foot is too small (", base_width, " x ", base_depth,
+            " mm); make base_offset_width/base_offset_depth less negative"));
+
+    assert(!base_taper || base_flare <= base_height - base_foot,
+        str("the base flares out to the tower steeper than 45 degrees (", base_flare,
+            " mm out over ", base_height - base_foot, " mm up), so it won't print without ",
+            "supports. Make base_offset_width/base_offset_depth less negative, raise ",
+            "base_height, lower base_foot, or bring base_corner_radius closer to corner_radius"));
 
     assert(base_corner_radius <= min(base_width, base_depth) / 2,
         str("base_corner_radius cannot exceed half the smaller of base_width/base_depth (max ",
@@ -461,10 +514,21 @@ if (make_base) {
             str("base_screw_seat must be at least ", base_sink_h + 1,
                 " mm for a countersink this size, or the cone breaks through the bottom"));
 
-        if (base_screw_position == "inside") {
+        if (base_screws_inside) {
             assert(rrect_sd(base_screw_xy, inner_w, inner_d, inner_r) <= -base_head_r,
                 str("the tower's cavity is too small for inside screw holes with a ",
-                    base_screw_head_d, " mm head; use smaller screws or put them outside"));
+                    base_screw_head_d, " mm head; use smaller screws",
+                    base_screws_forced_inside ? ", or give the base a flange so they can go outside"
+                                              : " or put them outside"));
+
+            // A foot tucked in under the tower can be narrower than the core
+            // above it; the heads still have to land on the base.
+            for (z = [0, base_screw_seat]) {
+                s = base_section(z);
+                assert(rrect_sd(base_screw_xy, s[0], s[1], s[2]) <= -(base_head_r + 1),
+                    str("inside screw heads hang off the base's foot ", z, " mm up. ",
+                        "Make base_offset_width/base_offset_depth less negative, or use smaller screws"));
+            }
         } else {
             // The recess has to clear the tower above it, and the head has to
             // land on solid base at the seat height, not hang off the taper.
@@ -482,17 +546,20 @@ if (make_base) {
     if (base_hollow) {
         assert(base_floor < base_height - 1,
             str("base_floor must be well below base_height (", base_height, " mm)"));
-        assert(base_wall < min(base_width, base_depth) / 4,
-            "base_wall is too thick for this base; thin it or widen the base");
+        assert(wall < min(base_width, base_depth) / 4,
+            "wall is too thick for this base; thin it or widen the base");
     }
 
     if (base_inlet) {
         assert(base_hollow, "base_inlet needs base_hollow = true: the module sits in the cavity");
 
+        assert(base_offset_depth >= 0,
+            "base_inlet needs base_offset_depth of 0 or more: the inlet sits in the plane of the tower's back face");
+
         assert(base_height >= base_inlet_min_height,
             str("base_height must be at least ", base_inlet_min_height,
                 " mm to fit the power inlet (cutout centre ", base_inlet_z,
-                " mm up, clip room above and below, and a ", base_wall, " mm roof)"));
+                " mm up, clip room above and below, and a ", base_inlet_roof, " mm roof)"));
 
         assert(base_alcove_w <= width - 2 * corner_radius,
             str("the inlet alcove (", base_alcove_w, " mm) is wider than the flat of the tower's ",
@@ -502,14 +569,14 @@ if (make_base) {
         assert(base_inlet_flange_w > base_inlet_w && base_inlet_flange_h > base_inlet_h,
             "base_inlet_flange_w/h must be larger than the cutout, or the module falls through");
 
-        assert(base_inlet_panel <= base_wall,
-            str("base_inlet_panel cannot be thicker than base_wall (", base_wall, " mm)"));
+        assert(base_inlet_panel <= wall,
+            str("base_inlet_panel cannot be thicker than wall (", wall, " mm)"));
 
         assert(base_inlet_panel + base_inlet_depth <= depth / 2 + inner_d / 2,
             str("the inlet module is deeper than the tower's core reaches; depth must be at least ",
                 base_inlet_panel + base_inlet_depth + wall, " mm"));
 
-        assert(base_screws == 0 || base_screw_position == "inside"
+        assert(base_screws == 0 || base_screws_inside
                || base_screw_xy[0] - base_column_r >= max(base_inlet_bay_w, base_alcove_w) / 2,
             "the back outside screw columns run into the inlet alcove; grow base_offset_width or put the screws inside");
     }
@@ -538,8 +605,39 @@ rows = max(floor(height / grid), 1);
 
 function row_z(j) = grid / 2 + j * grid;
 
+// The cap sits where the next segment would, so its rows carry on the same grid
+// from its own bottom, as far up as its high edge could hold one.
+cap_rows = max(ceil((cap_base + cap_rise) / grid), 1);
+cap_has_slots = cap_slots && cap_open;
+
+// Whether the cap slot at column offset u, row j, on the face aimed by `spin`
+// fits whole under the tilted top with cap_slot_roof to spare. The top is a
+// plane, so its lowest point over the opening is at one of the opening's
+// corners, on the outer or the inner face.
+function cap_slot_fits(u, j, face_off, spin) =
+    row_z(j) + open_h / 2 + cap_slot_roof
+    <= min([for (du = [-open_w / 2, open_w / 2], v = [face_off - wall, face_off])
+               let (x = (u + du) * cos(spin) - v * sin(spin),
+                    y = (u + du) * sin(spin) + v * cos(spin))
+               cap_top(x, y)]);
+
+// Slots on the cap, counted the way face_pattern() places them.
+function cap_face_slots(cols, face_off, spin, parity) =
+    len([for (i = [0 : cols - 1], j = [0 : cap_rows - 1])
+            if ((i + j) % 2 == parity
+                && cap_slot_fits(col_x(i, cols), j, face_off, spin)) 1]);
+
 // Column centers across a face, centered on the face.
 function col_x(i, cols) = (i - (cols - 1) / 2) * grid;
+
+// Which half of the checkerboard each face uses (see face_pattern()). Opposite
+// faces are mirror images. Each one counts its columns from the opposite end,
+// so with an even column count it has to flip parity to stay in step. The depth
+// faces take the opposite parity to the width faces so the corners stagger.
+parity_back  = 0;
+parity_front = (parity_back + cols_x - 1) % 2;
+parity_left  = alternate_corners ? 1 : 0;
+parity_right = (parity_left + cols_y - 1) % 2;
 
 // Tab centers along a wall. A tab shares the bottom of the tower with the
 // lowest row of slots, so it cannot sit on a column: snap the evenly spread
@@ -697,13 +795,7 @@ module skadis_tower(tabs = stackable, pockets = true) {
             shell();
             if (tabs) all_joints(pocket = false);
         }
-        // Width faces (normal to Y), then depth faces (normal to X). The depth
-        // faces take the opposite parity so the corners stagger.
-        p = alternate_corners ? 1 : 0;
-        if (slots_back)  face_pattern(cols_x, depth / 2,   0, 0);
-        if (slots_front) face_pattern(cols_x, depth / 2, 180, 0);
-        if (slots_left)  face_pattern(cols_y, width / 2,  90, p);
-        if (slots_right) face_pattern(cols_y, width / 2, -90, p);
+        all_faces();
 
         // Pockets don't depend on `tabs`: even a segment with no tabs of its
         // own has to drop onto the one below. They are left out only when the
@@ -737,6 +829,7 @@ module skadis_cap(pockets = true) {
             cap_tilt_cut();
         }
         if (pockets) all_joints(pocket = true);
+        if (cap_has_slots) all_faces(cap = true);
         // The collar: the tower's core carried up through the top.
         if (cap_open)
             translate([0, 0, -1])
@@ -846,13 +939,13 @@ module base_cavity() {
             }
         }
         // Solid columns carry outside screws up through the cavity.
-        if (base_screw_position == "outside")
+        if (!base_screws_inside)
             for (s = base_screw_signs)
                 translate([s[0] * base_screw_xy[0], s[1] * base_screw_xy[1], 0])
                     cylinder(r = base_column_r, h = base_height + 1);
         // Solid pads under inside screw heads, each webbed out to its corner of
         // the wall so it isn't a loose island when there is no floor.
-        if (base_screw_position == "inside")
+        if (base_screws_inside)
             for (s = base_screw_signs)
                 hull() {
                     translate([s[0] * base_screw_xy[0], s[1] * base_screw_xy[1], -1])
@@ -861,33 +954,33 @@ module base_cavity() {
                         cylinder(r = base_column_r, h = base_screw_seat + 1);
                 }
         // Walls around the inlet alcove.
-        if (base_inlet) inlet_side() base_alcove(grow = base_wall);
+        if (base_inlet) inlet_side() base_alcove(grow = wall);
     }
     // Thin the back wall around the cutout to panel thickness, so the clips
     // can catch behind it.
     if (base_inlet) inlet_side()
         translate([-base_inlet_bay_w / 2, base_front + base_inlet_panel,
                    base_inlet_z - base_inlet_h / 2 - base_inlet_clip_room])
-            cube([base_inlet_bay_w, base_wall - base_inlet_panel + 1,
+            cube([base_inlet_bay_w, wall - base_inlet_panel + 1,
                   base_inlet_h + 2 * base_inlet_clip_room]);
 }
 
-// The body shrunk by base_wall (horizontally), sitting on the floor or, with no
-// floor, running out through the bottom. At the
-// top it narrows to the tower's core, so where the base meets the tower its wall
-// is the tower's wall and the tabs stand on solid material.
+// The body shrunk by the wall (horizontally), sitting on the floor or, with no
+// floor, running out through the bottom. At the top it narrows to the tower's
+// core, so the base wall runs straight on into the tower's and the tabs stand
+// on solid material.
 module base_cavity_limit() {
     low = base_taper ? max(base_floor, base_foot) : base_floor;
     s = base_section(low);
     hull() {
         translate([0, 0, base_cavity_z0])
             linear_extrude(max(low - base_cavity_z0, eps))
-                rrect(s[0] - 2 * base_wall, s[1] - 2 * base_wall, max(s[2] - base_wall, 0));
+                rrect(s[0] - 2 * wall, s[1] - 2 * wall, max(s[2] - wall, 0));
         translate([0, 0, base_height])
             linear_extrude(1)
                 if (base_taper) rrect(inner_w, inner_d, inner_r);
-                else rrect(base_width - 2 * base_wall, base_depth - 2 * base_wall,
-                           max(base_corner_radius - base_wall, 0));
+                else rrect(base_width - 2 * wall, base_depth - 2 * wall,
+                           max(base_corner_radius - wall, 0));
     }
 }
 
@@ -916,16 +1009,27 @@ module base_screw_hole() {
         cylinder(d = base_screw_head_d, h = clear);
 }
 
+// The slot pattern on every face that has it. Width faces (normal to Y), then
+// depth faces (normal to X).
+module all_faces(cap = false) {
+    if (slots_back)  face_pattern(cols_x, depth / 2,   0, parity_back,  cap);
+    if (slots_front) face_pattern(cols_x, depth / 2, 180, parity_front, cap);
+    if (slots_left)  face_pattern(cols_y, width / 2,  90, parity_left,  cap);
+    if (slots_right) face_pattern(cols_y, width / 2, -90, parity_right, cap);
+}
+
 // The slot pattern for one face.
 //   cols     - how many grid columns fit across this face
 //   face_off - distance from the tower axis out to the outer surface
 //   spin     - rotation about Z that aims this face at +Y
 //   parity   - which half of the checkerboard this face uses. Flipping it on
 //              the adjacent faces is what staggers the pattern at the corners.
-module face_pattern(cols, face_off, spin, parity = 0) {
+//   cap      - for the cap: only the slots that fit under its tilted top
+module face_pattern(cols, face_off, spin, parity = 0, cap = false) {
     rotate([0, 0, spin])
-        for (i = [0 : cols - 1], j = [0 : rows - 1])
-            if ((i + j) % 2 == parity)
+        for (i = [0 : cols - 1], j = [0 : (cap ? cap_rows : rows) - 1])
+            if ((i + j) % 2 == parity
+                && (!cap || cap_slot_fits(col_x(i, cols), j, face_off, spin)))
                 translate([col_x(i, cols),
                            face_off - wall,
                            row_z(j)])
@@ -948,7 +1052,7 @@ pieces = concat(make_base ? [[0, 0]] : [],
 // when the cap goes on it, or when `stackable` asks for them.
 top_tabs = make_cap || stackable;
 
-function piece_w(p) = p[0] == 0 ? base_width : width;
+function piece_w(p) = p[0] == 0 ? max(base_width, width) : width;
 
 // Print layout: centres along X, left to right in stack order, layout_gap apart.
 function piece_x(n) = n <= 0 ? 0
@@ -995,19 +1099,22 @@ if (fused && make_cap && towers > 0 && !cap_open)
 if (make_base) {
     echo(str("Skadis base: ", base_width, " x ", base_depth, " mm footprint, ",
              base_height, " mm tall, ",
-             base_taper ? str("tapering to the ", width, " x ", depth, " mm tower above a ",
-                              base_foot, " mm foot")
+             base_taper ? str(min(base_offset_width, base_offset_depth) < 0
+                                  ? "flaring out" : "tapering", " to the ", width, " x ", depth,
+                              " mm tower above a ", base_foot, " mm foot")
                         : "straight sides"));
     echo(str("  tabs: ", tabs_per_wall * 4, " on top, for the lowest tower segment"));
     echo(base_screws == 0 ? "  screw holes: none"
-        : str("  screw holes: ", base_screws, " ", base_screw_position, ", ",
+        : str("  screw holes: ", base_screws, " ", base_screws_inside ? "inside" : "outside",
+              base_screws_forced_inside && base_screw_position != "inside"
+                  ? " (no flange, so not outside)" : "", ", ",
               base_screw_d, " mm shank, ", base_screw_head_d, " mm ", base_screw_head,
               " head seated ", base_screw_seat, " mm above the floor, at (+/-",
               base_screw_xy[0], ", +/-", base_screw_xy[1], ")"));
-    if (base_screws > 0 && base_screw_position == "inside")
+    if (base_screws > 0 && base_screws_inside)
         echo("  inside holes are covered by the tower: screw the base down first");
     echo(base_hollow
-        ? str("  hollow: ", base_wall, " mm walls, ",
+        ? str("  hollow: ", wall, " mm walls, ",
               base_floor > 0 ? str(base_floor, " mm floor") : "open bottom",
               ", open into the tower's core for wiring")
         : "  solid in the model on purpose - set infill in the slicer");
@@ -1067,6 +1174,17 @@ if (make_cap) {
     echo(cap_open ? str("  open collar: ", wall, " mm rim around a ", inner_w, " x ", inner_d,
                         " mm opening")
                   : "  solid in the model on purpose - set infill in the slicer");
+    if (cap_slots && !cap_open)
+        echo("  no slots: cap_slots needs cap_open, for the hollow behind a hook");
+    if (cap_has_slots) {
+        cap_slot_n =
+              (slots_back  ? cap_face_slots(cols_x, depth / 2,   0, parity_back)  : 0)
+            + (slots_front ? cap_face_slots(cols_x, depth / 2, 180, parity_front) : 0)
+            + (slots_left  ? cap_face_slots(cols_y, width / 2,  90, parity_left)  : 0)
+            + (slots_right ? cap_face_slots(cols_y, width / 2, -90, parity_right) : 0);
+        echo(str("  slots: ", cap_slot_n, cap_slot_n == 0
+                 ? " - too low for a whole slot; a higher tilt or cap_roof makes room" : ""));
+    }
 }
 
 // ============================================================================

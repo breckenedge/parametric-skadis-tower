@@ -48,8 +48,8 @@ render print 1200x450 0,0,60,62,0,15,780 \
     -D base_inlet=true -D base_height=45
 
 # Each piece on its own, at the defaults.
-render tower      700x1000 0,0,80,62,0,25,620
-render cap        800x560  0,0,8,55,0,25,300   -D towers=0 -D make_cap=true
+render tower      700x1000 0,0,80,62,0,25,620  -D make_base=false
+render cap        800x560  0,0,8,55,0,25,300   -D make_base=false -D towers=0 -D make_cap=true
 render base       800x560  0,0,10,55,0,25,380  -D towers=0 -D make_base=true
 render base-inlet 800x560  0,0,22,60,0,200,400 -D towers=0 -D make_base=true \
     -D base_inlet=true -D base_height=45
